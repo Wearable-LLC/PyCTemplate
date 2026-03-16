@@ -4,6 +4,10 @@
     "dockerfile": "Dockerfile"
   },
 
+  "remoteEnv": {
+    "UV_CACHE_DIR": "/home/vscode/.cache/uv"
+  },
+
   "customizations": {
     "vscode": {
       "extensions": [
