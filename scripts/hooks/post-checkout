@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+# post-checkout hook — runs after: git checkout, git switch, git clone (with --recurse)
+#
+# Arguments passed by git:
+#   $1  previous HEAD (before checkout)
+#   $2  new HEAD (after checkout)
+#   $3  flag: 1 = branch checkout, 0 = file checkout
+#
+# We only care about branch checkouts (flag == 1), not individual file restores.
+
+PREV_HEAD="$1"
+NEW_HEAD="$2"
+CHECKOUT_TYPE="$3"
+
+# Skip file-level checkouts
+if [[ "$CHECKOUT_TYPE" != "1" ]]; then
+    exit 0
+fi
+
+# Skip if .gitmodules doesn't exist
+if [[ ! -f ".gitmodules" ]]; then
+    exit 0
+fi
+
+# Only sync if .gitmodules or any submodule SHA changed between the two commits.
+# This avoids unnecessary network calls when switching between branches that
+# both point at the same submodule SHAs.
+if [[ -n "$PREV_HEAD" ]] && \
+   ! git diff --quiet "$PREV_HEAD" "$NEW_HEAD" -- .gitmodules 2>/dev/null && \
+   ! git diff --quiet "$PREV_HEAD" "$NEW_HEAD" -- $(git config --file .gitmodules --get-regexp 'path' | awk '{print $2}') 2>/dev/null; then
+    true  # changes detected — fall through to sync
+elif [[ -n "$PREV_HEAD" ]] && \
+     git diff --quiet "$PREV_HEAD" "$NEW_HEAD" -- .gitmodules 2>/dev/null; then
+    # .gitmodules unchanged — check if any recorded submodule SHAs changed
+    CHANGED=$(git diff --name-only "$PREV_HEAD" "$NEW_HEAD" 2>/dev/null | \
+              grep -Fx "$(git config --file .gitmodules --get-regexp 'path' | awk '{print $2}')" || true)
+    if [[ -z "$CHANGED" ]]; then
+        exit 0  # nothing submodule-related changed
+    fi
+fi
+
+SCRIPT_DIR="$(git rev-parse --show-toplevel)/scripts"
+if [[ -x "${SCRIPT_DIR}/update-submodules.sh" ]]; then
+    bash "${SCRIPT_DIR}/update-submodules.sh"
+fi

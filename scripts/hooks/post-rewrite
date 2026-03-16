@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+# post-rewrite hook — runs after: git rebase, git commit --amend
+#
+# Arguments passed by git:
+#   $1  command that triggered the rewrite: "rebase" or "amend"
+#
+# Rebase replays commits onto a new base, which can move submodule SHAs.
+
+if [[ ! -f ".gitmodules" ]]; then
+    exit 0
+fi
+
+SCRIPT_DIR="$(git rev-parse --show-toplevel)/scripts"
+if [[ -x "${SCRIPT_DIR}/update-submodules.sh" ]]; then
+    bash "${SCRIPT_DIR}/update-submodules.sh"
+fi

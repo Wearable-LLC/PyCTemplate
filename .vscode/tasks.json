@@ -1,0 +1,121 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    // ── Configure ──────────────────────────────────────────────────────────
+    {
+      "label": "CMake: Configure (Debug)",
+      "type": "shell",
+      "command": "cmake",
+      "args": [
+        "-S", "${workspaceFolder}",
+        "-B", "${workspaceFolder}/build",
+        "-G", "Ninja",
+        "-DCMAKE_BUILD_TYPE=Debug",
+        "-DCMAKE_CXX_COMPILER=g++",
+        "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
+        "-DBUILD_TESTS=ON"
+      ],
+      "group": "build",
+      "presentation": { "reveal": "always", "panel": "shared" },
+      "problemMatcher": []
+    },
+    {
+      "label": "CMake: Configure (Release)",
+      "type": "shell",
+      "command": "cmake",
+      "args": [
+        "-S", "${workspaceFolder}",
+        "-B", "${workspaceFolder}/build-release",
+        "-G", "Ninja",
+        "-DCMAKE_BUILD_TYPE=Release",
+        "-DCMAKE_CXX_COMPILER=g++",
+        "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
+        "-DBUILD_TESTS=OFF"
+      ],
+      "group": "build",
+      "presentation": { "reveal": "always", "panel": "shared" },
+      "problemMatcher": []
+    },
+
+    // ── Build ──────────────────────────────────────────────────────────────
+    {
+      "label": "CMake: Build (Debug)",
+      "type": "shell",
+      "command": "cmake",
+      "args": ["--build", "${workspaceFolder}/build", "--parallel"],
+      "group": { "kind": "build", "isDefault": true },
+      "dependsOn": "CMake: Configure (Debug)",
+      "presentation": { "reveal": "always", "panel": "shared" },
+      "problemMatcher": "$gcc"
+    },
+    {
+      "label": "CMake: Build (Release)",
+      "type": "shell",
+      "command": "cmake",
+      "args": ["--build", "${workspaceFolder}/build-release", "--parallel"],
+      "group": "build",
+      "dependsOn": "CMake: Configure (Release)",
+      "presentation": { "reveal": "always", "panel": "shared" },
+      "problemMatcher": "$gcc"
+    },
+    {
+      "label": "CMake: Build Tests",
+      "type": "shell",
+      "command": "cmake",
+      "args": ["--build", "${workspaceFolder}/build", "--parallel"],
+      "group": "build",
+      "dependsOn": "CMake: Configure (Debug)",
+      "presentation": { "reveal": "always", "panel": "shared" },
+      "problemMatcher": "$gcc"
+    },
+
+    // ── Test ───────────────────────────────────────────────────────────────
+    {
+      "label": "CTest: Run All",
+      "type": "shell",
+      "command": "ctest",
+      "args": [
+        "--test-dir", "${workspaceFolder}/build",
+        "--output-on-failure",
+        "--parallel"
+      ],
+      "group": { "kind": "test", "isDefault": true },
+      "dependsOn": "CMake: Build Tests",
+      "presentation": { "reveal": "always", "panel": "shared" },
+      "problemMatcher": []
+    },
+    {
+      "label": "CTest: Run Verbose",
+      "type": "shell",
+      "command": "ctest",
+      "args": [
+        "--test-dir", "${workspaceFolder}/build",
+        "--verbose"
+      ],
+      "group": "test",
+      "dependsOn": "CMake: Build Tests",
+      "presentation": { "reveal": "always", "panel": "shared" },
+      "problemMatcher": []
+    },
+
+    // ── Clean ──────────────────────────────────────────────────────────────
+    {
+      "label": "CMake: Clean",
+      "type": "shell",
+      "command": "cmake",
+      "args": ["--build", "${workspaceFolder}/build", "--target", "clean"],
+      "group": "build",
+      "presentation": { "reveal": "always", "panel": "shared" },
+      "problemMatcher": []
+    },
+    {
+      "label": "CMake: Clean All (remove build dirs)",
+      "type": "shell",
+      "command": "rm",
+      "args": ["-rf", "${workspaceFolder}/build", "${workspaceFolder}/build-release"],
+      "group": "build",
+      "presentation": { "reveal": "always", "panel": "shared" },
+      "problemMatcher": []
+    }
+  ]
+}

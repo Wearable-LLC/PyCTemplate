@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+# post-merge hook — runs after: git pull, git merge
+#
+# Arguments passed by git:
+#   $1  flag: 1 = squash merge, 0 = normal merge
+#
+# git pull is internally a fetch + merge, so this hook covers it too.
+
+if [[ ! -f ".gitmodules" ]]; then
+    exit 0
+fi
+
+# Check whether any submodule-related paths changed in the merge.
+# MERGE_HEAD is the SHA that was merged in; HEAD is the result.
+MERGE_HEAD="$(cat .git/MERGE_HEAD 2>/dev/null || echo "")"
+
+if [[ -n "$MERGE_HEAD" ]]; then
+    CHANGED=$(git diff --name-only "$MERGE_HEAD" HEAD 2>/dev/null | \
+              grep -Fx "$(git config --file .gitmodules --get-regexp 'path' | awk '{print $2}')" || true)
+    if [[ -z "$CHANGED" ]] && git diff --quiet "$MERGE_HEAD" HEAD -- .gitmodules 2>/dev/null; then
+        exit 0  # submodules unaffected by this merge
+    fi
+fi
+
+SCRIPT_DIR="$(git rev-parse --show-toplevel)/scripts"
+if [[ -x "${SCRIPT_DIR}/update-submodules.sh" ]]; then
+    bash "${SCRIPT_DIR}/update-submodules.sh"
+fi
