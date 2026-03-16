@@ -1,6 +1,17 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# ── Normalise line endings ─────────────────────────────────────────────────────
+# Converts any CRLF scripts to LF so they run correctly regardless of whether
+# the repo was cloned or extracted on Windows.
+echo "── Normalising line endings ───────────────────────────────────────────────"
+find . \
+    \( -name "*.sh" \
+    -o -path "*/scripts/hooks/*" \) \
+    -not -path "./.git/*" \
+    -not -path "./build/*" \
+    | xargs dos2unix --quiet 2>/dev/null || true
+
 echo "── Installing git hooks ───────────────────────────────────────────────────"
 bash scripts/install-hooks.sh
 
@@ -8,8 +19,6 @@ echo "── Initialising submodules ──────────────�
 bash scripts/update-submodules.sh
 
 # ── Python dependencies (opt-in) ──────────────────────────────────────────────
-# If this repo has a pyproject.toml, sync the Python environment with uv.
-# If not, uv is still available but nothing extra runs.
 if [[ -f "pyproject.toml" ]]; then
     echo "── Installing Python dependencies (uv sync) ───────────────────────────────"
     uv sync

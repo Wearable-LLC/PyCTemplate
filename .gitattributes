@@ -1,0 +1,45 @@
+# ── Default: normalise all text files to LF on checkout ──────────────────────
+* text=auto eol=lf
+
+# ── Shell scripts — always LF, never CRLF ────────────────────────────────────
+*.sh        text eol=lf
+*.bash      text eol=lf
+
+# Git hooks (no extension)
+scripts/hooks/post-checkout     text eol=lf
+scripts/hooks/post-merge        text eol=lf
+scripts/hooks/post-rewrite      text eol=lf
+
+# ── C++ sources ───────────────────────────────────────────────────────────────
+*.cpp       text eol=lf
+*.hpp       text eol=lf
+*.h         text eol=lf
+*.c         text eol=lf
+
+# ── CMake ─────────────────────────────────────────────────────────────────────
+CMakeLists.txt  text eol=lf
+*.cmake         text eol=lf
+
+# ── Config / data ─────────────────────────────────────────────────────────────
+*.json      text eol=lf
+*.yml       text eol=lf
+*.yaml      text eol=lf
+*.toml      text eol=lf
+*.md        text eol=lf
+*.txt       text eol=lf
+.gitignore  text eol=lf
+.gitattributes text eol=lf
+.clang-format  text eol=lf
+Dockerfile  text eol=lf
+
+# ── Binary files — never touch line endings ───────────────────────────────────
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.gif   binary
+*.ico   binary
+*.pdf   binary
+*.zip   binary
+*.a     binary
+*.so    binary
+*.o     binary
