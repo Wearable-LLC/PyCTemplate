@@ -127,10 +127,108 @@ Select the active CMake target in the status bar, then press `F5`:
    add_gtest(${PROJECT_NAME}_my_feature_tests test_my_feature.cpp)
    ```
 
-**New submodule:**
+## Git submodules
+
+Submodules are tracked via `scripts/update-submodules.sh` and the
+`post-checkout`, `post-merge`, and `post-rewrite` git hooks installed by
+`install-hooks.sh`. Once the hooks are in place, most submodule updates happen
+automatically — the workflows below cover the cases that still require a manual step.
+
+### Convention
+
+Keep all submodules under `deps/` so they are easy to locate and `.gitignore`
+rules can target them precisely:
+
+```
+deps/
+  shared-headers/     ← git submodule
+  hal/                ← git submodule
+```
+
+### Adding a submodule
+
 ```bash
-git submodule add <url> deps/<name>
-git commit -m 'chore: add <name> submodule'
-# Teammates run:
-bash scripts/update-submodules.sh
+# Add the submodule — pins it to the current HEAD of the default branch
+git submodule add git@github.com:YOUR_ORG/shared-headers.git deps/shared-headers
+
+git add .gitmodules deps/shared-headers
+git commit -m "chore: add shared-headers submodule"
+git push
+```
+
+Teammates get it automatically on their next `git pull` — the `post-merge` hook
+calls `update-submodules.sh` which inits and clones any uninitialised submodules.
+
+### Pinning a submodule to a specific commit or tag
+
+Submodules record a specific SHA, not a branch. To move the pin:
+
+```bash
+cd deps/shared-headers
+git fetch
+git checkout v2.1.0          # or a specific SHA
+cd ../..
+
+git add deps/shared-headers
+git commit -m "chore: bump shared-headers to v2.1.0"
+git push
+```
+
+### Updating a submodule to its remote latest
+
+```bash
+git submodule update --remote deps/shared-headers
+git add deps/shared-headers
+git commit -m "chore: update shared-headers to latest"
+git push
+```
+
+### Checking submodule status
+
+```bash
+git submodule status --recursive              # SHA, path, up-to-date status
+git diff HEAD~1 HEAD -- deps/shared-headers   # what SHA changed
+git log HEAD~1..HEAD -- deps/shared-headers   # commit that changed it
+```
+
+### Removing a submodule
+
+Git has no single remove command — four steps are required:
+
+```bash
+# 1. Remove from .gitmodules
+git config --file .gitmodules --remove-section submodule.deps/shared-headers
+
+# 2. Remove from .git/config
+git config --remove-section submodule.deps/shared-headers
+
+# 3. Remove the tracked directory and cache entry
+git rm --cached deps/shared-headers
+rm -rf deps/shared-headers
+
+# 4. Remove the submodule data directory
+rm -rf .git/modules/deps/shared-headers
+
+# 5. Commit
+git add .gitmodules
+git commit -m "chore: remove shared-headers submodule"
+git push
+```
+
+### Using a submodule in CMake
+
+```cmake
+# If the submodule is a CMake project
+add_subdirectory(deps/shared-headers)
+target_link_libraries(${PROJECT_NAME}_lib PRIVATE shared_headers)
+
+# If it is header-only
+target_include_directories(${PROJECT_NAME}_lib PUBLIC deps/shared-headers/include)
+```
+
+### Manual sync (if hooks are not yet installed)
+
+```bash
+bash scripts/update-submodules.sh           # all submodules
+bash scripts/update-submodules.sh deps/hal  # one submodule
 ```
